@@ -1,0 +1,36 @@
+{
+  "name": "@mobix/plugin-sdk",
+  "version": "0.9.0-beta.0",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/mobix.git",
+    "directory": "packages/plugin-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/OWNER/mobix/issues"
+  },
+  "homepage": "https://github.com/OWNER/mobix#readme",
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  }
+}

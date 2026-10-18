@@ -1,0 +1,55 @@
+name: Mobix Native Build Checks
+on:
+  workflow_dispatch:
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build frontend and Android APK/AAB
+        run: |
+          npm ci
+          npm run build
+          npm install --prefix examples/hello-mobix
+          npm run build --prefix examples/hello-mobix
+          rm -rf native/android/app/src/main/assets/www
+          cp -r examples/hello-mobix/dist native/android/app/src/main/assets/www
+          cd native/android
+          gradle --no-daemon assembleDebug bundleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-artifacts
+          path: |
+            native/android/app/build/outputs/apk/debug/*.apk
+            native/android/app/build/outputs/bundle/release/*.aab
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build frontend and copy resources
+        run: |
+          npm ci
+          npm run build
+          npm install --prefix examples/hello-mobix
+          npm run build --prefix examples/hello-mobix
+          rm -rf native/ios/Sources/MobixApp/www
+          cp -r examples/hello-mobix/dist native/ios/Sources/MobixApp/www
+      - name: Compile iOS SwiftPM app (Xcode iOS SDK required)
+        run: |
+          cd native/ios
+          xcodebuild -version
+          xcrun --sdk iphonesimulator swift build --triple arm64-apple-ios17.0-simulator

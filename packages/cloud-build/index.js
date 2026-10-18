@@ -1,0 +1,2 @@
+export function createBuildRequest({platform,gitRef,profile}) {if(!['android','ios'].includes(platform))throw new Error('Unsupported platform');if(!gitRef||!/^[a-zA-Z0-9._/-]{1,200}$/.test(gitRef))throw new Error('Invalid git ref');return {schemaVersion:1,platform,gitRef,profile:profile??'debug'};}
+export class CloudBuildNotConfigured extends Error {constructor(){super('No cloud build provider configured. Supply an authenticated provider implementation.')}}

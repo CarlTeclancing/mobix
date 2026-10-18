@@ -1,0 +1,1 @@
+export function createRegistry(){const plugins=new Map();return {register(p){if(!/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(p.name)||p.protocol!==1||plugins.has(p.name))throw new Error('Invalid or duplicate plugin');plugins.set(p.name,p)},get(n){return plugins.get(n)},list(){return [...plugins.keys()]}}}

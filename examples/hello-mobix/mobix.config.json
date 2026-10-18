@@ -1,0 +1,5 @@
+{
+  "appId": "dev.mobix.hello",
+  "appName": "Hello Mobix",
+  "webDir": "dist"
+}

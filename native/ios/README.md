@@ -1,0 +1,2 @@
+# iOS runtime — experimental Swift source
+This is a WKWebView runtime starting point, **not an Xcode project or validated IPA**. Bundle `www/index.html` in an iOS app and instantiate `MobixWebViewController`. The JavaScript SDK currently expects `window.mobixBridge.postMessage`, while WKWebView exposes `window.webkit.messageHandlers.mobixBridge.postMessage`; an injection shim is still required. The iOS file-origin check, escaping and storage key validation need security testing. Do not distribute this runtime without those fixes.

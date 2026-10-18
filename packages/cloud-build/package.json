@@ -1,0 +1,6 @@
+{
+  "name": "@mobix/cloud-build",
+  "version": "0.3.0",
+  "type": "module",
+  "main": "./index.js"
+}

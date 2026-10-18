@@ -1,0 +1,25 @@
+{
+  "name": "mobix-monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "npm run build --prefix packages/core && npm run build --prefix packages/cli",
+    "setup:gradle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-gradle.ps1",
+    "verify:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-android.ps1",
+    "test": "node --test tests/*.test.mjs",
+    "verify:native:android": "node scripts/verify-native.mjs android",
+    "verify:native:ios": "node scripts/verify-native.mjs ios",
+    "verify:device": "node scripts/device-smoke-test.mjs",
+    "verify:android:build": "node scripts/native-pipeline.mjs android build",
+    "verify:ios:build": "node scripts/native-pipeline.mjs ios build",
+    "verify:android:device": "node scripts/native-pipeline.mjs android device",
+    "verify:ios:device": "node scripts/native-pipeline.mjs ios device",
+    "verify:all": "node scripts/native-pipeline.mjs all check",
+    "check": "npm run build && npm test && npm run check:packages",
+    "check:packages": "node scripts/check-packages.mjs",
+    "release:dry-run": "npm run check && (cd packages/core && npm pack --dry-run) && (cd packages/cli && npm pack --dry-run) && (cd packages/plugin-sdk && npm pack --dry-run)"
+  },
+  "version": "0.9.0-beta.0",
+  "description": "Experimental cross-platform mobile framework for web developers",
+  "license": "Apache-2.0"
+}
