@@ -43,3 +43,5 @@ npm run release:dry-run
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE). This project includes integrations with third-party tooling such as xtool, which retains its own licensing and attribution.
+
+Core stabilization contracts, CLI reference and migration notes: [Phase 1](docs/phase-1.md).

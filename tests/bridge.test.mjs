@@ -39,3 +39,41 @@ test('malformed native errors do not crash dispatcher', async () => {
  window.__mobixReceive(JSON.stringify({v:1,id:req.id,ok:false}));
  await assert.rejects(promise,/MALFORMED_RESPONSE/);
 });
+
+test('timeout rejects and ignores late replies', async()=>{
+ const promise=invoke('Device','getInfo',{}, {timeoutMs:5});const req=sent.at(-1);
+ await assert.rejects(promise,{code:'TIMEOUT'});
+ window.__mobixReceive(JSON.stringify({v:1,id:req.id,ok:true,result:null}));
+});
+test('version mismatch and malformed success reject immediately',async()=>{
+ for(const response of [{v:2,ok:true,result:{}},{v:1,ok:true},{v:1,ok:'yes'}]){
+  const promise=invoke('Device','getInfo');window.__mobixReceive(JSON.stringify({...response,id:sent.at(-1).id}));
+  await assert.rejects(promise,{code:response.v===2?'VERSION_MISMATCH':'MALFORMED_RESPONSE'});
+ }
+});
+test('unparseable and non-string messages are ignored',async()=>{
+ const promise=invoke('Device','getInfo');const id=sent.at(-1).id;
+ for(const raw of [null,42,'{','null','[]'])window.__mobixReceive(raw);
+ window.__mobixReceive(JSON.stringify({v:1,id,ok:true,result:null}));assert.equal(await promise,null);
+});
+test('pre-abort and invalid timeouts never send',async()=>{
+ const count=sent.length;const c=new AbortController();c.abort();
+ await assert.rejects(invoke('Device','getInfo',{}, {signal:c.signal}),{name:'AbortError'});
+ for(const timeoutMs of [0,NaN,Infinity,300001])await assert.rejects(invoke('Device','getInfo',{}, {timeoutMs}),/Invalid timeout/);
+ assert.equal(sent.length,count);
+});
+test('transport errors have serializable codes',async()=>{
+ const original=window.mobixBridge.postMessage;window.mobixBridge.postMessage=()=>{throw 'private detail'};
+ try{await assert.rejects(invoke('Device','getInfo'),e=>e.code==='TRANSPORT_ERROR'&&e.toJSON().message==='Native transport failed')}
+ finally{window.mobixBridge.postMessage=original}
+});
+test('pagehide clears requests and subscriptions',async()=>{
+ let calls=0;Mobix.on('test.event',()=>calls++);const promise=invoke('Device','getInfo');
+ events.dispatchEvent(new Event('pagehide'));
+ await assert.rejects(promise,{code:'RUNTIME_DISPOSED'});
+ window.__mobixReceive(JSON.stringify({v:1,type:'event',name:'test.event',data:null}));assert.equal(calls,0);
+});
+test('explicit version negotiation validates result',async()=>{
+ const promise=Mobix.negotiate();const req=sent.at(-1);assert.equal(req.plugin,'Bridge');
+ window.__mobixReceive(JSON.stringify({v:1,id:req.id,ok:true,result:{protocol:1}}));assert.deepEqual(await promise,{protocol:1});
+});

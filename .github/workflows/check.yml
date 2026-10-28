@@ -8,17 +8,23 @@ permissions:
   contents: read
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install SDK dependencies
-        run: npm install --prefix packages/core
+        run: npm ci --prefix packages/core
       - name: Install CLI dependencies
-        run: npm install --prefix packages/cli
+        run: npm ci --prefix packages/cli
       - name: Build and test packages
         run: npm run check
       - name: Check npm package contents
         run: npm run release:dry-run
+
+      - name: Install and build packed starter
+        run: npm run verify:starter

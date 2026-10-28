@@ -17,7 +17,8 @@
     "verify:all": "node scripts/native-pipeline.mjs all check",
     "check": "npm run build && npm test && npm run check:packages",
     "check:packages": "node scripts/check-packages.mjs",
-    "release:dry-run": "npm run check && (cd packages/core && npm pack --dry-run) && (cd packages/cli && npm pack --dry-run) && (cd packages/plugin-sdk && npm pack --dry-run)"
+    "release:dry-run": "npm run check && node scripts/pack-dry-run.mjs",
+    "verify:starter": "node scripts/verify-starter.mjs"
   },
   "version": "0.9.0-beta.0",
   "description": "Experimental cross-platform mobile framework for web developers",

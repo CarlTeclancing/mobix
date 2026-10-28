@@ -61,7 +61,7 @@ class MainActivity : Activity() {
    override fun onPostMessage(view:WebView,message:androidx.webkit.WebMessageCompat,sourceOrigin:Uri,isMainFrame:Boolean,replyProxy:JavaScriptReplyProxy){
     if(!isMainFrame||sourceOrigin.scheme!="https"||sourceOrigin.host!="appassets.androidplatform.net"||sourceOrigin.port!=-1)return
     val raw=message.data?:return
-    if(raw.length>65536)return
+    if(raw.toByteArray(Charsets.UTF_8).size>65536)return
     if(BuildConfig.DEBUG) {
      val testMessage=runCatching{JSONObject(raw)}.getOrNull()
      if(testMessage?.optString("plugin")=="Test" && testMessage.optString("method")=="report") {
@@ -88,10 +88,11 @@ class MainActivity : Activity() {
    require(req.getInt("v")==1){"Unsupported protocol version"}
    val plugin=req.getString("plugin");val method=req.getString("method")
    require(plugin.matches(Regex("[A-Za-z][A-Za-z0-9]{0,63}"))&&method.matches(Regex("[A-Za-z][A-Za-z0-9]{0,63}"))){"Invalid method identifier"}
-   val params=req.optJSONObject("params")?:JSONObject()
+   val params=req.getJSONObject("params")
    val result=when("$plugin.$method"){
+    "Bridge.negotiate"->{val versions=params.getJSONArray("versions");require((0 until versions.length()).any{versions.optInt(it)==1}){"Unsupported protocol version"};JSONObject().put("protocol",1)}
     "Device.getInfo"->JSONObject().put("platform","android").put("osVersion",Build.VERSION.RELEASE).put("model",Build.MODEL)
-    "Storage.get"->{val key=validatedKey(params);JSONObject().put("value",getPreferences(0).getString(key,null))}
+    "Storage.get"->{val key=validatedKey(params);JSONObject().put("value",(getPreferences(0).getString(key,null)?:JSONObject.NULL))}
     "Storage.set"->{val key=validatedKey(params);val value=params.getString("value");require(value.length<=16384){"Value too long"};getPreferences(0).edit().putString(key,value).apply();JSONObject().put("saved",true)}
     "Storage.remove"->{val key=validatedKey(params);getPreferences(0).edit().remove(key).apply();JSONObject().put("removed",true)}
     "Navigation.openExternal"->{
@@ -119,7 +120,7 @@ class MainActivity : Activity() {
   }catch(e:Exception){
    val id=runCatching{JSONObject(raw).optString("id","")}.getOrDefault("")
    response.put("v",1).put("id",id).put("ok",false)
-   response.put("error",JSONObject().put("code",if(e is NoSuchMethodException)"METHOD_NOT_FOUND" else "INVALID_REQUEST").put("message",e.message?:"Native call failed"))
+   response.put("error",JSONObject().put("code",if(e is NoSuchMethodException)"METHOD_NOT_FOUND" else if(e.message=="Unsupported protocol version")"VERSION_MISMATCH" else "INVALID_REQUEST").put("message",e.message?:"Native call failed"))
   }
   val js="window.__mobixReceive && window.__mobixReceive("+JSONObject.quote(response.toString())+")"
   runOnUiThread {if(!isFinishing&&!isDestroyed&&::web.isInitialized&&web.url?.startsWith("$trustedOrigin/")==true)web.evaluateJavascript(js,null)}

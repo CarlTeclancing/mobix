@@ -6,7 +6,8 @@
     "mobix": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "typescript": "^5.7.3",
