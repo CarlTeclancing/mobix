@@ -1,6 +1,6 @@
 {
   "name": "@mobix/plugin-sdk",
-  "version": "0.9.0-beta.0",
+  "version": "0.10.0-beta.0",
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",

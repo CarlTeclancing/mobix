@@ -6,6 +6,10 @@ node_modules/
 **/.build/
 **/.swiftpm/
 **/DerivedData/
+**/*.xcodeproj/
+**/xcuserdata/
+**/local.properties
+**/keystore.properties
 **/.DS_Store
 .env
 .env.*

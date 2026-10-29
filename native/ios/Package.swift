@@ -1,15 +1,24 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
     name: "MobixApp",
     platforms: [.iOS(.v17)],
-    products: [.executable(name: "MobixApp", targets: ["MobixApp"])],
+    products: [
+        .library(name: "MobixRuntime", targets: ["MobixRuntime"]),
+        .executable(name: "MobixApp", targets: ["MobixApp"]),
+    ],
     targets: [
+        .target(
+            name: "MobixRuntime",
+            path: "MobixRuntime",
+            linkerSettings: [.linkedLibrary("sqlite3")]
+        ),
         .executableTarget(
             name: "MobixApp",
+            dependencies: ["MobixRuntime"],
             path: "Sources/MobixApp",
             resources: [.copy("www")]
-        )
+        ),
     ]
 )

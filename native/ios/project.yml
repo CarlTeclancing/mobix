@@ -1,0 +1,42 @@
+name: MobixApp
+options:
+  bundleIdPrefix: dev.mobix
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+targets:
+  MobixApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/MobixApp
+        excludes:
+          - www
+      - path: MobixRuntime
+      - path: Sources/MobixApp/www
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.mobix.prototype
+        PRODUCT_NAME: MobixApp
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Mobix
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
+    dependencies:
+      - sdk: libsqlite3.tbd
+    scheme:
+      testTargets: []
+      gatherCoverageData: false

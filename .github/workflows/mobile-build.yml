@@ -1,9 +1,28 @@
-name: Mobix Native Build Checks
+name: Mobix Native Builds
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'native/**'
+      - 'packages/cli/templates/**'
+      - 'scripts/**'
+      - '.github/workflows/mobile-build.yml'
+  pull_request:
+    paths:
+      - 'native/**'
+      - 'packages/cli/templates/**'
+      - 'scripts/**'
+      - '.github/workflows/mobile-build.yml'
+
+permissions:
+  contents: read
+
 jobs:
   android:
+    name: Android APK + AAB
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,42 +33,122 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+      - name: Install SDK platform 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-      - name: Build frontend and Android APK/AAB
+      - name: Install project dependencies
         run: |
-          npm ci
-          npm run build
-          npm install --prefix examples/hello-mobix
-          npm run build --prefix examples/hello-mobix
-          rm -rf native/android/app/src/main/assets/www
-          cp -r examples/hello-mobix/dist native/android/app/src/main/assets/www
-          cd native/android
-          gradle --no-daemon assembleDebug bundleRelease
-      - uses: actions/upload-artifact@v4
+          npm ci --prefix packages/core
+          npm ci --prefix packages/cli
+          npm install --prefix examples/hello-mobix --no-audit --no-fund
+      - name: Build web assets and native artifacts
+        run: node scripts/native-pipeline.mjs android build
+      - name: Bridge instrumentation on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            cd native/android
+            ./gradlew --no-daemon connectedDebugAndroidTest
+      - name: Upload Android artifacts and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: android-artifacts
+          if-no-files-found: warn
           path: |
             native/android/app/build/outputs/apk/debug/*.apk
-            native/android/app/build/outputs/bundle/release/*.aab
-  ios:
-    runs-on: macos-latest
+            native/android/app/build/outputs/bundle/debug/*.aab
+            native/android/app/build/reports/androidTests/**
+            reports/**
+
+  android-windows:
+    name: Android Windows diagnostics + build
+    runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build frontend and copy resources
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install SDK platform 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install project dependencies
         run: |
-          npm ci
-          npm run build
-          npm install --prefix examples/hello-mobix
-          npm run build --prefix examples/hello-mobix
-          rm -rf native/ios/Sources/MobixApp/www
-          cp -r examples/hello-mobix/dist native/ios/Sources/MobixApp/www
-      - name: Compile iOS SwiftPM app (Xcode iOS SDK required)
+          npm ci --prefix packages/core
+          npm ci --prefix packages/cli
+          npm install --prefix examples/hello-mobix --no-audit --no-fund
+      - name: Detect the Android SDK with the PowerShell setup script
+        shell: powershell
+        run: ./scripts/setup-android.ps1
+      - name: Build debug APK and AAB
+        run: node scripts/native-pipeline.mjs android build
+      - name: Upload Android evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-windows-artifacts
+          if-no-files-found: warn
+          path: |
+            native/android/app/build/outputs/apk/debug/*.apk
+            native/android/app/build/outputs/bundle/debug/*.aab
+            reports/**
+
+  ios:
+    name: iOS simulator app + bridge smoke test
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Install project dependencies
         run: |
-          cd native/ios
-          xcodebuild -version
-          xcrun --sdk iphonesimulator swift build --triple arm64-apple-ios17.0-simulator
+          npm ci --prefix packages/core
+          npm ci --prefix packages/cli
+          npm install --prefix examples/hello-mobix --no-audit --no-fund
+      - name: Build simulator app
+        run: node scripts/native-pipeline.mjs ios build
+      - name: Launch simulator and run bridge smoke test
+        run: |
+          set -euo pipefail
+          APP="native/ios/build/Build/Products/Debug-iphonesimulator/MobixApp.app"
+          test -d "$APP"
+          DEVICE_ID=$(xcrun simctl list devices available | grep -m1 -E '^[[:space:]]+iPhone' | grep -oE '[0-9A-F-]{36}')
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" "$APP"
+          xcrun simctl launch "$DEVICE_ID" dev.mobix.prototype --mobix-smoke-test
+          CONTAINER=""
+          for attempt in $(seq 1 60); do
+            CONTAINER=$(xcrun simctl get_app_container "$DEVICE_ID" dev.mobix.prototype data || true)
+            if [ -n "$CONTAINER" ] && [ -f "$CONTAINER/Documents/mobix-smoke.txt" ]; then break; fi
+            sleep 1
+          done
+          test -f "$CONTAINER/Documents/mobix-smoke.txt"
+          RESULT=$(cat "$CONTAINER/Documents/mobix-smoke.txt")
+          echo "iOS bridge smoke result: $RESULT"
+          cp "$CONTAINER/Documents/mobix-smoke.txt" native/ios/mobix-smoke-result.txt
+          test "$RESULT" = "PASS"
+      - name: Upload iOS evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-artifacts
+          if-no-files-found: warn
+          path: |
+            native/ios/build/Build/Products/Debug-iphonesimulator/MobixApp.app
+            native/ios/mobix-smoke-result.txt
+            reports/**

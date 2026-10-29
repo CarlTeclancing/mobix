@@ -5,6 +5,7 @@
   "scripts": {
     "build": "npm run build --prefix packages/core && npm run build --prefix packages/cli",
     "setup:gradle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-gradle.ps1",
+    "setup:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-android.ps1",
     "verify:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-android.ps1",
     "test": "node --test tests/*.test.mjs",
     "verify:native:android": "node scripts/verify-native.mjs android",
@@ -17,10 +18,11 @@
     "verify:all": "node scripts/native-pipeline.mjs all check",
     "check": "npm run build && npm test && npm run check:packages",
     "check:packages": "node scripts/check-packages.mjs",
+    "sync:templates": "node scripts/sync-templates.mjs",
     "release:dry-run": "npm run check && node scripts/pack-dry-run.mjs",
     "verify:starter": "node scripts/verify-starter.mjs"
   },
-  "version": "0.9.0-beta.0",
+  "version": "0.10.0-beta.0",
   "description": "Experimental cross-platform mobile framework for web developers",
   "license": "Apache-2.0"
 }

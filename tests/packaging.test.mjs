@@ -11,7 +11,7 @@ test('packed packages contain assets and CLI creates portable starter',()=>{
   for(const name of ['core','cli','plugin-sdk']){
    const pack=JSON.parse(run('npm',['pack','--ignore-scripts','--json','--pack-destination',temp],join(root,'packages',name)))[0];
    const files=pack.files.map(f=>f.path);
-   for(const file of (name==='cli'?['dist/index.js','templates/hello-mobix/src/main.tsx','templates/android/app/src/main/java/dev/mobix/prototype/MainActivity.kt','templates/ios/Sources/MobixApp/MobixWebViewController.swift']:name==='core'?['dist/index.js','dist/index.d.ts']:['index.js','index.d.ts']))assert.ok(files.includes(file),file);
+   for(const file of (name==='cli'?['dist/index.js','dist/android.js','dist/ios.js','templates/hello-mobix/src/main.tsx','templates/android/gradlew','templates/android/gradle/wrapper/gradle-wrapper.jar','templates/android/app/src/main/java/dev/mobix/prototype/MainActivity.kt','templates/ios/MobixRuntime/MobixWebViewController.swift','templates/ios/MobixRuntime/MobixDatabase.swift','templates/ios/project.yml']:name==='core'?['dist/index.js','dist/index.d.ts']:['index.js','index.d.ts']))assert.ok(files.includes(file),file);
    if(name==='cli'){
     const extracted=join(temp,'extracted');mkdirSync(extracted);
     run('tar',['-xzf',join(temp,pack.filename),'-C',extracted],temp);

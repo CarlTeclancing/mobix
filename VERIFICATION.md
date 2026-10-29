@@ -1,25 +1,56 @@
-# Mobix verification results (2026-10-18)
+# Mobix verification results (2026-10-29)
+
+Environment: Windows, Node v22.19.0, Android SDK at
+`C:\Users\HP-360\AppData\Local\Android\Sdk` (platform `android-36`, build-tools `36.1.0`,
+`adb`; no `android-35`, no `sdkmanager`, no JDK). No macOS/Xcode/XcodeGen/xtool and no
+connected Android device.
 
 ## Executed in this environment
-- `npm run build`: PASS (core + CLI). CLI Node types were supplied locally for offline compilation; on a normal connected workstation run `npm install --prefix packages/cli`.
-- `npm test`: PASS (3/3 tests).
-- `npm run verify:native:android`: BLOCKED. Java available, but adb and Gradle wrapper executable/JAR missing. No APK or AAB compiled.
-- `npm run verify:native:ios`: BLOCKED. xcodebuild unavailable and no complete Xcode project. No IPA compiled.
-- Physical-device verification: NOT EXECUTED (no connected device).
 
-## Windows Android validation
-1. Install Node.js 22, JDK 17, Android Studio, Android SDK platform 35, Android build tools, platform-tools; set ANDROID_HOME and JAVA_HOME.
-2. Install dependencies in core, CLI and sample project (`npm install` in each). Run `npm run build` from repository root.
-3. Bootstrap Gradle wrapper using `scripts/setup-gradle.ps1` and installed Gradle. The wrapper JAR is NOT included in this archive.
-4. Run `npm run verify:native:android`. Fix any reported failures and preserve `reports/android-verification.json`.
-5. Enable USB debugging on your Android device, authorize computer, then run `npm run verify:device` after a successful debug APK build.
-6. Manually exercise Device.getInfo and Storage set/get/remove, navigation, rotation, resume and denial handling; save logcat and screenshots.
+| Command | Result |
+| --- | --- |
+| `npm run build` | PASS — core + CLI TypeScript builds. |
+| `npm test` | PASS — 27/27 tests, including native/template parity, manifest policy, CI invariants, SDK discovery and artifact hashing. |
+| `npm run check` | PASS — build + tests + package checks at `0.10.0-beta.0`. |
+| `npm run verify:starter` | PASS — packed tarballs installed into a temporary project, Vite built 27 modules, both native syncs succeeded. |
+| `node scripts/native-pipeline.mjs android check` | FAIL/BLOCKED — 3/5: SDK, build-tools and wrapper pass; platform 35 missing, Java missing. |
+| `node scripts/native-pipeline.mjs ios check` | FAIL/BLOCKED — 2/3: SwiftPM project and XcodeGen spec present; no build backend. |
+| `node packages/cli/dist/index.js doctor` | Reports the same gaps and no connected devices. |
+| `adb devices` | No devices. |
+| Android APK/AAB | **NOT PRODUCED** — blocked by missing JDK + platform 35. |
+| Android install/launch + instrumentation | **NOT EXECUTED** — no device/emulator. |
+| iOS `.app`/IPA | **NOT PRODUCED** — no macOS/Xcode/xtool. |
+| Remote CI | **NOT RUN** from this checkout. |
 
-## macOS iOS validation
-- An actual Xcode project must first be implemented. The existing Swift controller alone cannot produce an IPA.
-- After Xcode project generation, use `xcodebuild` on macOS, run on a simulator and physical device, then validate signing and archive export.
+## Reproduce on a provisioned machine
+
+Android (Windows/macOS/Linux):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-android.ps1 -Install -Persist
+node scripts/native-pipeline.mjs android build    # APK + AAB, writes reports/pipeline-android-build.json
+node scripts/native-pipeline.mjs android device   # requires exactly one authorized device
+```
+
+iOS (macOS with Xcode + XcodeGen):
+
+```bash
+brew install xcodegen
+node scripts/native-pipeline.mjs ios build
+node scripts/native-pipeline.mjs ios device       # simulator + bridge smoke test
+```
+
+Expected artifacts:
+
+- `native/android/app/build/outputs/apk/debug/app-debug.apk`
+- `native/android/app/build/outputs/bundle/debug/app-debug.aab`
+- `native/ios/build/Build/Products/Debug-iphonesimulator/MobixApp.app`
 
 ## Caveats
-- The smoke test only confirms install/launch, not native bridge behavior.
-- `bundleRelease` produces an AAB that may still be unsigned; publishing requires release signing and store validation.
-- Do not claim Android or iOS production readiness from these scripts alone.
+
+- The Android bridge smoke test and instrumentation are code-complete but have never run on a
+  device in this environment.
+- The iOS smoke test writes `Documents/mobix-smoke.txt`; CI asserts it contains `PASS`.
+- Release AABs are unsigned unless signing is configured; unsigned bundles are not
+  store-publishable.
+- Do not claim production readiness from these scripts alone.

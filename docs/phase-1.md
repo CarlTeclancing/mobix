@@ -4,7 +4,7 @@
 The v0.9.0-beta.0 checkout included core/CLI exports, native templates and basic tests. Missing pieces were typed events, a version handshake, prompt rejection of malformed replies, lifecycle disposal, stable serializable SDK errors, plugin method validation, strict CLI arguments and tests of real tarballs. CLI type checking initially failed because dependencies were absent. The native runtimes had an iOS message-handler retain cycle and Android missing-key responses omitted the value field.
 
 ## Contracts and migration from v0.9
-Version remains 0.9.0-beta.0; this is an unreleased stabilization change.
+Version remained 0.9.0-beta.0 during Phase 1; Phase 2 later moved the whole repository to 0.10.0-beta.0. This is an unreleased stabilization change.
 - Request: `{v:1,id,plugin,method,params}`.
 - Response: `{v:1,id,ok:true,result}` or `{v:1,id,ok:false,error:{code,message}}`.
 - Event: `{v:1,type:"event",name,data}`.

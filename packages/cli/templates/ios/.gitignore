@@ -1,2 +1,7 @@
 .build/
 .swiftpm/
+DerivedData/
+MobixApp.xcodeproj/
+mobix-smoke-result.txt
+*.xcuserstate
+xcuserdata/

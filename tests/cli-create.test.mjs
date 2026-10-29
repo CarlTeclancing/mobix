@@ -16,8 +16,16 @@ test('CLI create works outside the source repository with bundled templates', ()
     assert.ok(existsSync(join(project,'ios/Package.swift')));
     assert.ok(existsSync(join(project,'src/main.tsx')));
     const pkg = JSON.parse(readFileSync(join(project,'package.json'),'utf8'));
-    assert.equal(pkg.dependencies['@mobix/core'], '^0.9.0-beta.0');
-    assert.equal(pkg.devDependencies['@mobix/cli'], '^0.9.0-beta.0');
+    const version = JSON.parse(readFileSync(resolve('packages/cli/package.json'),'utf8')).version;
+    assert.equal(pkg.dependencies['@mobix/core'], '^' + version);
+    assert.equal(pkg.devDependencies['@mobix/cli'], '^' + version);
+    assert.ok(existsSync(join(project,'android/gradlew')));
+    assert.ok(existsSync(join(project,'android/gradle/wrapper/gradle-wrapper.jar')));
+    assert.ok(existsSync(join(project,'ios/MobixRuntime/MobixWebViewController.swift')));
+    assert.ok(existsSync(join(project,'ios/project.yml')));
+    const spec = readFileSync(join(project,'android/app/build.gradle.kts'),'utf8');
+    assert.match(spec, new RegExp('applicationId = "dev\\.mobix\\.mobixtestapp"'));
+    assert.match(spec, /namespace = "dev\.mobix\.prototype"/);
   } finally { rmSync(cwd,{recursive:true,force:true}); }
 });
 
