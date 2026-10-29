@@ -55,7 +55,7 @@ jobs:
             ./gradlew --no-daemon connectedDebugAndroidTest
       - name: Upload Android artifacts and evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-artifacts
           if-no-files-found: warn
@@ -94,7 +94,7 @@ jobs:
         run: node scripts/native-pipeline.mjs android build
       - name: Upload Android evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-windows-artifacts
           if-no-files-found: warn
@@ -144,7 +144,7 @@ jobs:
           test "$RESULT" = "PASS"
       - name: Upload iOS evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-artifacts
           if-no-files-found: warn
