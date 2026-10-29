@@ -35,7 +35,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install SDK platform 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Install project dependencies
         run: |
           npm ci --prefix packages/core
@@ -81,7 +81,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install SDK platform 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Install project dependencies
         run: |
           npm ci --prefix packages/core
